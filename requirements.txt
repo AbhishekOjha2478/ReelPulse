@@ -1,0 +1,22 @@
+requests
+python-dotenv
+
+# YouTube
+yt-dlp
+google-api-python-client
+google-auth
+google-auth-oauthlib
+google-auth-httplib2
+
+# Free-tier AI for trend-keyword normalization
+google-generativeai
+
+# Trend sources
+pytrends
+
+# Video editing (GitHub Actions ubuntu-latest runners already have ffmpeg preinstalled)
+scenedetect[opencv]
+
+# Storage / static dashboard (no server -- rendered to docs/ for GitHub Pages)
+sqlalchemy
+jinja2

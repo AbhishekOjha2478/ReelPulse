@@ -1,0 +1,6 @@
+.env
+client_secret.json
+data/youtube_oauth_token.json
+temp/
+__pycache__/
+*.pyc

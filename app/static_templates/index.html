@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block content %}
+
+{% if paused %}
+<div class="alert paused">Pipeline is <strong>paused</strong>: {{ pause_reason }}</div>
+{% else %}
+<div class="alert running">Pipeline is running automatically.</div>
+{% endif %}
+
+<p>YouTube API quota used (recent runs, approx): <strong>{{ quota_used }}</strong> / {{ quota_budget }} units/day</p>
+
+<h2>Recent runs</h2>
+<table>
+  <tr><th>ID</th><th>Started</th><th>Status</th><th>Quota</th><th>Notes</th></tr>
+  {% for run in runs %}
+  <tr>
+    <td><a href="runs/{{ run.id }}.html">{{ run.id }}</a></td>
+    <td>{{ run.started_at }}</td>
+    <td><span class="badge {{ run.status }}">{{ run.status }}</span></td>
+    <td>{{ run.quota_units_used }}</td>
+    <td>{{ run.notes }}</td>
+  </tr>
+  {% endfor %}
+</table>
+
+<h2>Recent uploads</h2>
+<table>
+  <tr><th>ID</th><th>Kind</th><th>Title</th><th>Status</th><th>YouTube ID</th><th>Dry run</th></tr>
+  {% for u in uploads %}
+  <tr>
+    <td><a href="runs/{{ u.run_id }}.html">{{ u.id }}</a></td>
+    <td>{{ u.kind }}</td>
+    <td>{{ u.title }}</td>
+    <td><span class="badge {{ u.status }}">{{ u.status }}</span></td>
+    <td>{% if u.youtube_video_id and u.youtube_video_id != "DRY_RUN" %}<a href="https://youtu.be/{{ u.youtube_video_id }}" target="_blank">{{ u.youtube_video_id }}</a>{% else %}{{ u.youtube_video_id }}{% endif %}</td>
+    <td>{{ u.dry_run }}</td>
+  </tr>
+  {% endfor %}
+</table>
+
+<h2>Blocked channels</h2>
+<table>
+  <tr><th>Channel ID</th><th>Reason</th></tr>
+  {% for b in blocked %}
+  <tr><td>{{ b.channel_id }}</td><td>{{ b.reason }}</td></tr>
+  {% endfor %}
+</table>
+<p>To block a channel or pause/resume, go to <strong>Actions &rarr; Pipeline Control &rarr; Run workflow</strong> in this repo.</p>
+
+{% endblock %}

@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>{% block title %}CC Trend Publisher{% endblock %}</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 960px; margin: 2rem auto; padding: 0 1rem; color: #1a1a1a; }
+    table { width: 100%; border-collapse: collapse; margin-bottom: 2rem; }
+    th, td { text-align: left; padding: 0.4rem 0.6rem; border-bottom: 1px solid #ddd; font-size: 0.9rem; }
+    h1, h2 { margin-top: 2rem; }
+    .badge { display: inline-block; padding: 0.1rem 0.5rem; border-radius: 0.3rem; font-size: 0.8rem; }
+    .badge.completed, .badge.uploaded { background: #d4edda; color: #155724; }
+    .badge.failed { background: #f8d7da; color: #721c24; }
+    .badge.running, .badge.pending { background: #fff3cd; color: #856404; }
+    .badge.skipped { background: #e2e3e5; color: #383d41; }
+    .alert { padding: 0.8rem 1rem; border-radius: 0.4rem; margin-bottom: 1rem; }
+    .alert.paused { background: #f8d7da; color: #721c24; }
+    .alert.running { background: #d4edda; color: #155724; }
+    code { background: #f1f1f1; padding: 0.1rem 0.3rem; border-radius: 0.2rem; }
+    a { color: #0d6efd; text-decoration: none; }
+  </style>
+</head>
+<body>
+  <h1><a href="index.html">CC Trend Publisher Dashboard</a></h1>
+  <p><em>Read-only audit trail, regenerated after every pipeline run. To pause/resume the pipeline or block a channel, use the "Pipeline Control" workflow under this repo's Actions tab.</em></p>
+  {% block content %}{% endblock %}
+</body>
+</html>

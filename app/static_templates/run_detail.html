@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block content %}
+
+<p><a href="../index.html">&larr; back</a></p>
+
+{% if run %}
+<h2>Run {{ run.id }} <span class="badge {{ run.status }}">{{ run.status }}</span></h2>
+<p>Started: {{ run.started_at }} &middot; Finished: {{ run.finished_at }}</p>
+<p>Quota used: {{ run.quota_units_used }}</p>
+<p>Notes: {{ run.notes }}</p>
+{% else %}
+<p>Run not found.</p>
+{% endif %}
+
+<h3>Uploads from this run</h3>
+<table>
+  <tr><th>Kind</th><th>Title</th><th>Status</th><th>Error</th></tr>
+  {% for u in uploads %}
+  <tr>
+    <td>{{ u.kind }}</td>
+    <td>{{ u.title }}</td>
+    <td><span class="badge {{ u.status }}">{{ u.status }}</span></td>
+    <td>{{ u.error }}</td>
+  </tr>
+  {% endfor %}
+</table>
+
+<h3>Source candidates (license audit trail)</h3>
+<table>
+  <tr><th>Title</th><th>Channel</th><th>License</th><th>Verified at</th><th>Source</th></tr>
+  {% for c in candidates %}
+  <tr>
+    <td>{{ c.title }}</td>
+    <td>{{ c.channel_title }}</td>
+    <td>{{ c.license }}</td>
+    <td>{{ c.license_verified_at }}</td>
+    <td><a href="{{ c.video_url }}" target="_blank">link</a></td>
+  </tr>
+  {% endfor %}
+</table>
+
+{% endblock %}

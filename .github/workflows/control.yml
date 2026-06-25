@@ -1,0 +1,48 @@
+name: Pipeline Control
+
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: 'pause | resume | block'
+        required: true
+        type: choice
+        options: [pause, resume, block]
+      reason:
+        description: 'Reason (used for pause and block)'
+        required: false
+        default: ''
+      channel_id:
+        description: 'YouTube channel ID to block (only used when action=block)'
+        required: false
+        default: ''
+
+permissions:
+  contents: write
+
+jobs:
+  control:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - run: pip install sqlalchemy python-dotenv
+
+      - name: Apply control action
+        run: >
+          python control_cli.py
+          --action "${{ inputs.action }}"
+          --reason "${{ inputs.reason }}"
+          --channel-id "${{ inputs.channel_id }}"
+
+      - name: Commit state change
+        run: |
+          git config user.name "cc-publisher-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add data/pipeline.db
+          git diff --cached --quiet || git commit -m "Control action: ${{ inputs.action }}"
+          git push

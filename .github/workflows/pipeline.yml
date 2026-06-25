@@ -1,0 +1,52 @@
+name: CC Trend Publisher Pipeline
+
+on:
+  schedule:
+    - cron: '0 9 * * *'
+    - cron: '0 21 * * *'
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  run-pipeline:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Write credential files from secrets
+        run: |
+          mkdir -p data
+          echo "${{ secrets.YT_CLIENT_SECRET_B64 }}" | base64 -d > client_secret.json
+          echo "${{ secrets.YT_OAUTH_TOKEN_B64 }}" | base64 -d > data/youtube_oauth_token.json
+
+      - name: Run pipeline
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
+          CHANNEL_BRAND_NAME: ${{ vars.CHANNEL_BRAND_NAME }}
+          DRY_RUN: ${{ vars.DRY_RUN }}
+          DEFAULT_PRIVACY_STATUS: ${{ vars.DEFAULT_PRIVACY_STATUS }}
+        run: python -m app.scheduler
+
+      - name: Remove decoded credential files before committing
+        if: always()
+        run: rm -f client_secret.json data/youtube_oauth_token.json
+
+      - name: Commit updated state + dashboard
+        if: always()
+        run: |
+          git config user.name "cc-publisher-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add data/pipeline.db docs
+          git diff --cached --quiet || git commit -m "Pipeline run $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          git push
