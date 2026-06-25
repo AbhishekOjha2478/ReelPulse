@@ -13,7 +13,7 @@ TEMP_DIR.mkdir(exist_ok=True)
 
 # --- Free-tier AI (trend keyword normalization) ---
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
-GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-1.5-flash")
+GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
 
 # --- YouTube Data API (free quota) ---
 YOUTUBE_API_KEY = os.getenv("YOUTUBE_API_KEY")
