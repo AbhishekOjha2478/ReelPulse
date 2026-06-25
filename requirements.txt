@@ -8,14 +8,15 @@ google-auth
 google-auth-oauthlib
 google-auth-httplib2
 
-# Free-tier AI for trend-keyword normalization
-google-generativeai
+# Free-tier AI for trend-keyword normalization: called directly over REST
+# in app/trends.py (no SDK) since google-generativeai is now fully
+# deprecated/unsupported -- avoids being broken by the next SDK swap too.
 
 # Trend sources
 pytrends
 
 # Video editing (GitHub Actions ubuntu-latest runners already have ffmpeg preinstalled)
-scenedetect[opencv]
+scenedetect
 
 # Storage / static dashboard (no server -- rendered to docs/ for GitHub Pages)
 sqlalchemy

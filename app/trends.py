@@ -9,6 +9,7 @@ phrases, never to generate topics on its own.
 
 import logging
 
+import requests
 from googleapiclient.discovery import build
 from pytrends.request import TrendReq
 
@@ -16,6 +17,12 @@ from app.config import GEMINI_API_KEY, GEMINI_MODEL, MAX_KEYWORDS_PER_RUN, YOUTU
 from app.db import Keyword, get_session
 
 logger = logging.getLogger(__name__)
+
+# Called directly over REST instead of via the `google-generativeai` Python
+# SDK, which Google has fully deprecated (it stopped receiving updates as of
+# mid-2025). The REST surface underneath any Gemini SDK is the stable part;
+# calling it directly means there's no SDK to go stale out from under us.
+GEMINI_API_BASE = "https://generativelanguage.googleapis.com/v1beta"
 
 
 def get_youtube_trending_titles(region_code="US", max_results=15):
@@ -40,17 +47,33 @@ def get_google_trends(geo="US"):
         return []
 
 
-def _pick_fallback_model(genai) -> str:
+def _gemini_pick_fallback_model() -> str:
     """If the configured model name is gone (renamed/deprecated), find a
     current one instead of just giving up. Prefers a 'flash' (cheap/fast,
     free-tier-friendly) model that supports generateContent."""
-    models = list(genai.list_models())
+    resp = requests.get(f"{GEMINI_API_BASE}/models", params={"key": GEMINI_API_KEY}, timeout=15)
+    resp.raise_for_status()
+    models = resp.json().get("models", [])
     candidates = [
-        m.name for m in models if "generateContent" in getattr(m, "supported_generation_methods", [])
+        m["name"].split("/")[-1]
+        for m in models
+        if "generateContent" in m.get("supportedGenerationMethods", [])
     ]
     flash_candidates = [m for m in candidates if "flash" in m]
-    chosen = (flash_candidates or candidates)[0]
-    return chosen.split("/")[-1]  # API returns "models/gemini-x.y-flash"
+    return (flash_candidates or candidates)[0]
+
+
+def _gemini_generate(model: str, prompt: str) -> str:
+    url = f"{GEMINI_API_BASE}/models/{model}:generateContent"
+    resp = requests.post(
+        url,
+        params={"key": GEMINI_API_KEY},
+        json={"contents": [{"parts": [{"text": prompt}]}]},
+        timeout=30,
+    )
+    resp.raise_for_status()
+    data = resp.json()
+    return data["candidates"][0]["content"]["parts"][0]["text"]
 
 
 def normalize_with_ai(raw_signals):
@@ -70,9 +93,6 @@ def normalize_with_ai(raw_signals):
         logger.warning("GEMINI_API_KEY not set; falling back to raw signals as keywords.")
         return raw_signals[:MAX_KEYWORDS_PER_RUN], "DEGRADED: GEMINI_API_KEY not set, used raw trend titles unclustered."
 
-    import google.generativeai as genai
-
-    genai.configure(api_key=GEMINI_API_KEY)
     prompt = (
         "Here are raw trending video titles and search terms:\n"
         + "\n".join(f"- {s}" for s in raw_signals)
@@ -88,9 +108,7 @@ def normalize_with_ai(raw_signals):
     warning = None
     for attempt in range(2):  # configured model, then one auto-detected fallback
         try:
-            model = genai.GenerativeModel(model_to_try)
-            response = model.generate_content(prompt)
-            text = response.text.strip()
+            text = _gemini_generate(model_to_try, prompt).strip()
             phrases = [p.strip() for p in text.split(",") if p.strip()]
             return phrases[:MAX_KEYWORDS_PER_RUN], warning
         except Exception as exc:
@@ -100,7 +118,7 @@ def normalize_with_ai(raw_signals):
                     model_to_try, exc,
                 )
                 try:
-                    model_to_try = _pick_fallback_model(genai)
+                    model_to_try = _gemini_pick_fallback_model()
                     warning = (
                         f"DEGRADED: configured GEMINI_MODEL={GEMINI_MODEL!r} failed ({exc}); "
                         f"auto-switched to {model_to_try!r}. Update GEMINI_MODEL in repo variables."
