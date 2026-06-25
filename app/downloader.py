@@ -28,7 +28,12 @@ def download_video(video_id: str) -> str:
 
     ydl_opts = {
         "outtmpl": str(out_dir / "source.%(ext)s"),
-        "format": "bestvideo[height<=1080]+bestaudio/best[height<=1080]",
+        # Falls all the way back to plain "best" (whatever single combined
+        # format is available) if the preferred split video+audio streams
+        # at <=1080p aren't offered for a given video -- some videos only
+        # expose a restricted format list, and a too-strict selector here
+        # turned into "All candidates failed to download" for every video.
+        "format": "bestvideo[height<=1080]+bestaudio/best[height<=1080]/best",
         "merge_output_format": "mp4",
         "quiet": True,
         "noprogress": True,

@@ -69,7 +69,7 @@ def _gemini_generate(model: str, prompt: str) -> str:
         url,
         params={"key": GEMINI_API_KEY},
         json={"contents": [{"parts": [{"text": prompt}]}]},
-        timeout=30,
+        timeout=45,
     )
     resp.raise_for_status()
     data = resp.json()
