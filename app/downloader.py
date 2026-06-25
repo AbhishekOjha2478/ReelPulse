@@ -35,13 +35,12 @@ def download_video(video_id: str) -> str:
         "merge_output_format": "mp4",
         "quiet": True,
         "noprogress": True,
-        # The bgutil PO-token provider plugin (running as a server on
-        # localhost:4416, started in the workflow) auto-injects proof-of-origin
-        # tokens for the web client, which is what both restores the format
-        # list and clears the "not a bot" challenge from datacenter IPs. We
-        # explicitly target the web client because that's the one PO tokens
-        # unlock; the tv/android clients still hit the bot-check on CI IPs.
-        "extractor_args": {"youtube": {"player_client": ["web"]}},
+        # Deliberately NOT forcing player_client: an earlier run with yt-dlp's
+        # default multi-client set + cookies cleared the bot-check (only formats
+        # were missing), whereas forcing web-only reintroduced it. We keep the
+        # defaults and let the bgutil PO-token provider (server on :4416,
+        # started in the workflow) supply the proof-of-origin tokens that fill
+        # in the otherwise-missing web formats.
     }
     if YT_COOKIES_FILE:
         ydl_opts["cookiefile"] = YT_COOKIES_FILE
