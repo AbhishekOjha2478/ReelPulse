@@ -17,6 +17,7 @@ from app.downloader import LicenseRevokedError, download_video
 from app.editor import build_compilation, build_short
 from app.metadata import build_compilation_metadata, build_short_metadata
 from app.publisher import is_paused, publish_video
+from app.redact import redact_secrets
 from app.trends import discover_keywords
 from app.youtube_search import select_candidates_for_run
 
@@ -114,9 +115,12 @@ def _save_preview(run_id, src_path, label):
 
 
 def _join_notes(message, warnings):
-    if not warnings:
-        return message
-    return message + " | " + " | ".join(warnings)
+    if warnings:
+        message = message + " | " + " | ".join(warnings)
+    # Single chokepoint for everything that becomes RunLog.notes -- catches
+    # the generic `str(exc)` path too, in case any exception (e.g. an
+    # HttpError whose .uri embeds ?key=...) ever reaches here unredacted.
+    return redact_secrets(message)
 
 
 def _mark_used(candidates):

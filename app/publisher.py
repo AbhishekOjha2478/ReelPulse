@@ -12,6 +12,7 @@ from googleapiclient.http import MediaFileUpload
 
 from app.config import DRY_RUN, YOUTUBE_OAUTH_TOKEN_FILE
 from app.db import PipelineState, Upload, get_session
+from app.redact import redact_secrets
 from app.youtube_search import reverify_license
 
 logger = logging.getLogger(__name__)
@@ -113,13 +114,14 @@ def publish_video(file_path: str, metadata: dict, candidates, kind: str,
         session.commit()
         logger.info("Uploaded %s -> https://youtu.be/%s", metadata["title"], response["id"])
     except HttpError as exc:
-        error_text = str(exc).lower()
+        safe_exc = redact_secrets(str(exc))
+        error_text = safe_exc.lower()
         upload_row.status = "failed"
-        upload_row.error = str(exc)
+        upload_row.error = safe_exc
         session.commit()
         if any(indicator in error_text for indicator in STRIKE_INDICATORS):
-            pause_pipeline(f"YouTube API returned a possible account restriction: {exc}")
-        logger.error("Upload failed: %s", exc)
+            pause_pipeline(f"YouTube API returned a possible account restriction: {safe_exc}")
+        logger.error("Upload failed: %s", safe_exc)
     finally:
         session.close()
 

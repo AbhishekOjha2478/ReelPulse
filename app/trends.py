@@ -15,6 +15,7 @@ from pytrends.request import TrendReq
 
 from app.config import GEMINI_API_KEY, GEMINI_MODEL, MAX_KEYWORDS_PER_RUN, YOUTUBE_API_KEY
 from app.db import Keyword, get_session
+from app.redact import redact_secrets
 
 logger = logging.getLogger(__name__)
 
@@ -27,13 +28,20 @@ GEMINI_API_BASE = "https://generativelanguage.googleapis.com/v1beta"
 
 def get_youtube_trending_titles(region_code="US", max_results=15):
     """Real trending video titles from YouTube's own 'most popular' chart."""
-    youtube = build("youtube", "v3", developerKey=YOUTUBE_API_KEY)
-    response = (
-        youtube.videos()
-        .list(part="snippet", chart="mostPopular", regionCode=region_code, maxResults=max_results)
-        .execute()
-    )
-    return [item["snippet"]["title"] for item in response.get("items", [])]
+    try:
+        youtube = build("youtube", "v3", developerKey=YOUTUBE_API_KEY)
+        response = (
+            youtube.videos()
+            .list(part="snippet", chart="mostPopular", regionCode=region_code, maxResults=max_results)
+            .execute()
+        )
+        return [item["snippet"]["title"] for item in response.get("items", [])]
+    except Exception as exc:
+        # HttpError's .uri (and str()) embeds the full request URL including
+        # ?key=<YOUTUBE_API_KEY> -- never let this propagate unhandled, since
+        # an uncaught exception here would carry the key into RunLog.notes.
+        logger.warning("YouTube trending fetch failed: %s", redact_secrets(str(exc)))
+        return []
 
 
 def get_google_trends(geo="US"):
@@ -112,24 +120,28 @@ def normalize_with_ai(raw_signals):
             phrases = [p.strip() for p in text.split(",") if p.strip()]
             return phrases[:MAX_KEYWORDS_PER_RUN], warning
         except Exception as exc:
+            safe_exc = redact_secrets(str(exc))
             if attempt == 0:
                 logger.warning(
                     "Gemini model %r failed (%s); auto-detecting a current model.",
-                    model_to_try, exc,
+                    model_to_try, safe_exc,
                 )
                 try:
                     model_to_try = _gemini_pick_fallback_model()
                     warning = (
-                        f"DEGRADED: configured GEMINI_MODEL={GEMINI_MODEL!r} failed ({exc}); "
+                        f"DEGRADED: configured GEMINI_MODEL={GEMINI_MODEL!r} failed ({safe_exc}); "
                         f"auto-switched to {model_to_try!r}. Update GEMINI_MODEL in repo variables."
                     )
                     continue
                 except Exception as list_exc:
-                    logger.warning("Could not auto-detect a fallback Gemini model: %s", list_exc)
-            logger.warning("Gemini normalization failed (%s); falling back to raw signals.", exc)
+                    logger.warning(
+                        "Could not auto-detect a fallback Gemini model: %s",
+                        redact_secrets(str(list_exc)),
+                    )
+            logger.warning("Gemini normalization failed (%s); falling back to raw signals.", safe_exc)
             return (
                 raw_signals[:MAX_KEYWORDS_PER_RUN],
-                f"DEGRADED: Gemini call failed ({exc}); used raw trend titles unclustered.",
+                f"DEGRADED: Gemini call failed ({safe_exc}); used raw trend titles unclustered.",
             )
 
 

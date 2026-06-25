@@ -66,6 +66,7 @@ jobs:
           git config user.email "actions@users.noreply.github.com"
           git add data/pipeline.db docs
           git diff --cached --quiet || git commit -m "Pipeline run $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          git pull --rebase origin master
           git push
 
       - name: Check whether this run degraded or failed

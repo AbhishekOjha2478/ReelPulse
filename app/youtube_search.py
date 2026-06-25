@@ -15,6 +15,7 @@ from googleapiclient.errors import HttpError
 
 from app.config import YOUTUBE_API_KEY
 from app.db import BlockedChannel, Candidate, get_session
+from app.redact import redact_secrets
 
 logger = logging.getLogger(__name__)
 
@@ -57,7 +58,7 @@ def search_cc_candidates(keyword: str, max_results=10):
             .execute()
         )
     except HttpError as exc:
-        logger.error("YouTube search failed for %r: %s", keyword, exc)
+        logger.error("YouTube search failed for %r: %s", keyword, redact_secrets(str(exc)))
         return []
 
     video_ids = [item["id"]["videoId"] for item in search_response.get("items", [])]
@@ -136,7 +137,7 @@ def reverify_license(video_id: str) -> bool:
     try:
         response = youtube.videos().list(part="status", id=video_id).execute()
     except HttpError as exc:
-        logger.error("License re-verification failed for %s: %s", video_id, exc)
+        logger.error("License re-verification failed for %s: %s", video_id, redact_secrets(str(exc)))
         return False
 
     items = response.get("items", [])
