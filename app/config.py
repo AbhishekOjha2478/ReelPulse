@@ -46,7 +46,7 @@ BACKGROUND_MUSIC_PATH = os.getenv("BACKGROUND_MUSIC_PATH", "")
 DB_PATH = os.getenv("DB_PATH", str(DATA_DIR / "pipeline.db"))
 DATABASE_URL = f"sqlite:///{DB_PATH}"
 
-CHANNEL_BRAND_NAME = os.getenv("CHANNEL_BRAND_NAME", "Your Channel")
+CHANNEL_BRAND_NAME = os.getenv("CHANNEL_BRAND_NAME", "ReelPulse")
 
 # Start with "private" or "unlisted" while you build trust in the pipeline;
 # flip to "public" once you've manually checked a few real uploads.

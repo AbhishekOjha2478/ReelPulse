@@ -1,4 +1,4 @@
-name: CC Trend Publisher Pipeline
+name: ReelPulse Pipeline
 
 on:
   schedule:
