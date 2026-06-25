@@ -11,7 +11,7 @@ import datetime
 import logging
 import shutil
 
-from app.config import DEFAULT_PRIVACY_STATUS, MAX_KEYWORDS_PER_RUN, TEMP_DIR
+from app.config import DEFAULT_PRIVACY_STATUS, DRY_RUN, MAX_KEYWORDS_PER_RUN, PREVIEW_DIR, TEMP_DIR
 from app.db import Candidate, RunLog, get_session, init_db
 from app.downloader import LicenseRevokedError, download_video
 from app.editor import build_compilation, build_short
@@ -80,6 +80,10 @@ def run_pipeline():
         short_meta = build_short_metadata(short_candidate, topic)
         compilation_meta = build_compilation_metadata(compilation_candidates, topic)
 
+        if DRY_RUN:
+            _save_preview(run_id, short_path, "short")
+            _save_preview(run_id, compilation_path, "compilation")
+
         publish_video(
             short_path, short_meta, [short_candidate], kind="short",
             run_id=run_id, privacy_status=DEFAULT_PRIVACY_STATUS,
@@ -96,6 +100,17 @@ def run_pipeline():
         _finish_run(run_id, "failed", quota_used, _join_notes(str(exc), warnings))
     finally:
         _cleanup_temp()
+
+
+def _save_preview(run_id, src_path, label):
+    """While DRY_RUN, keep a copy of the rendered output so it can be
+    inspected (e.g. as a GitHub Actions artifact) before anything goes live
+    -- _cleanup_temp() below wipes TEMP_DIR but never touches PREVIEW_DIR."""
+    dest = PREVIEW_DIR / f"run{run_id}_{label}.mp4"
+    try:
+        shutil.copyfile(src_path, dest)
+    except OSError as exc:
+        logger.warning("Could not save preview for %s: %s", label, exc)
 
 
 def _join_notes(message, warnings):

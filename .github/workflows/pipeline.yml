@@ -34,6 +34,7 @@ jobs:
           mkdir -p data
           echo "${{ secrets.YT_CLIENT_SECRET_B64 }}" | base64 -d > client_secret.json
           echo "${{ secrets.YT_OAUTH_TOKEN_B64 }}" | base64 -d > data/youtube_oauth_token.json
+          echo "${{ secrets.YT_COOKIES_B64 }}" | base64 -d > yt_cookies.txt
 
       - name: Run pipeline
         env:
@@ -42,11 +43,21 @@ jobs:
           CHANNEL_BRAND_NAME: ${{ vars.CHANNEL_BRAND_NAME }}
           DRY_RUN: ${{ vars.DRY_RUN }}
           DEFAULT_PRIVACY_STATUS: ${{ vars.DEFAULT_PRIVACY_STATUS }}
+          YT_COOKIES_FILE: yt_cookies.txt
         run: python -m app.scheduler
+
+      - name: Upload preview videos (only produced while DRY_RUN)
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: preview-videos-${{ github.run_id }}
+          path: preview/
+          if-no-files-found: ignore
+          retention-days: 7
 
       - name: Remove decoded credential files before committing
         if: always()
-        run: rm -f client_secret.json data/youtube_oauth_token.json
+        run: rm -f client_secret.json data/youtube_oauth_token.json yt_cookies.txt
 
       - name: Commit updated state + dashboard
         if: always()

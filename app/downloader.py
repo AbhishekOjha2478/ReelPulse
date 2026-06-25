@@ -6,7 +6,7 @@ import os
 
 import yt_dlp
 
-from app.config import TEMP_DIR
+from app.config import TEMP_DIR, YT_COOKIES_FILE
 from app.youtube_search import reverify_license
 
 logger = logging.getLogger(__name__)
@@ -33,6 +33,8 @@ def download_video(video_id: str) -> str:
         "quiet": True,
         "noprogress": True,
     }
+    if YT_COOKIES_FILE:
+        ydl_opts["cookiefile"] = YT_COOKIES_FILE
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         info = ydl.extract_info(video_url, download=True)
         filename = ydl.prepare_filename(info)

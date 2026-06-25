@@ -8,8 +8,10 @@ load_dotenv()
 BASE_DIR = Path(__file__).resolve().parent.parent
 DATA_DIR = BASE_DIR / "data"
 TEMP_DIR = BASE_DIR / "temp"
+PREVIEW_DIR = BASE_DIR / "preview"
 DATA_DIR.mkdir(exist_ok=True)
 TEMP_DIR.mkdir(exist_ok=True)
+PREVIEW_DIR.mkdir(exist_ok=True)
 
 # --- Free-tier AI (trend keyword normalization) ---
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
@@ -42,6 +44,12 @@ CLIP_SECONDS_PER_SOURCE = int(os.getenv("CLIP_SECONDS_PER_SOURCE", "45"))
 # necessarily cover embedded third-party music). Optionally point this at your
 # own royalty-free track to overlay instead of silence.
 BACKGROUND_MUSIC_PATH = os.getenv("BACKGROUND_MUSIC_PATH", "")
+
+# Netscape-format cookies.txt from a logged-in Google account, used so
+# yt-dlp's requests look like an authenticated browser session instead of
+# anonymous bot traffic -- GitHub Actions' shared IP ranges get challenged
+# by YouTube ("Sign in to confirm you're not a bot") otherwise.
+YT_COOKIES_FILE = os.getenv("YT_COOKIES_FILE", "")
 
 DB_PATH = os.getenv("DB_PATH", str(DATA_DIR / "pipeline.db"))
 DATABASE_URL = f"sqlite:///{DB_PATH}"

@@ -2,5 +2,6 @@
 client_secret.json
 data/youtube_oauth_token.json
 temp/
+preview/
 __pycache__/
 *.pyc
