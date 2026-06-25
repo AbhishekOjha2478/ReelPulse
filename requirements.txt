@@ -3,6 +3,10 @@ python-dotenv
 
 # YouTube
 yt-dlp
+# yt-dlp plugin that fetches proof-of-origin tokens from the bgutil provider
+# server (started as a Docker container in the workflow). PO tokens are what
+# let downloads work from GitHub Actions' flagged datacenter IPs.
+bgutil-ytdlp-pot-provider
 google-api-python-client
 google-auth
 google-auth-oauthlib

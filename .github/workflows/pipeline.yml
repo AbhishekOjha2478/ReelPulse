@@ -29,6 +29,18 @@ jobs:
           curl -fsSL https://deno.land/install.sh | sh -s -- -y
           echo "$HOME/.deno/bin" >> "$GITHUB_PATH"
 
+      - name: Start PO-token provider (defeats YouTube's datacenter-IP bot check)
+        run: |
+          docker run --name bgutil-provider -d --restart unless-stopped \
+            -p 4416:4416 brainicism/bgutil-ytdlp-pot-provider
+          # Wait for the provider's HTTP server to accept connections.
+          for i in $(seq 1 30); do
+            if curl -fs http://127.0.0.1:4416/ping >/dev/null 2>&1; then
+              echo "PO-token provider is up."; break
+            fi
+            sleep 2
+          done
+
       - name: Write credential files from secrets
         run: |
           mkdir -p data

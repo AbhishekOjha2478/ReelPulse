@@ -35,13 +35,13 @@ def download_video(video_id: str) -> str:
         "merge_output_format": "mp4",
         "quiet": True,
         "noprogress": True,
-        # YouTube's default "web" player client increasingly returns an empty
-        # / restricted format list to datacenter IPs (PO-token gating), which
-        # showed up as "Requested format is not available" for every video
-        # even with cookies. Asking yt-dlp to try alternative player clients
-        # (which expose formats without a PO token) is the current standard
-        # workaround. Order matters: first that yields formats wins.
-        "extractor_args": {"youtube": {"player_client": ["tv", "android", "ios", "web"]}},
+        # The bgutil PO-token provider plugin (running as a server on
+        # localhost:4416, started in the workflow) auto-injects proof-of-origin
+        # tokens for the web client, which is what both restores the format
+        # list and clears the "not a bot" challenge from datacenter IPs. We
+        # explicitly target the web client because that's the one PO tokens
+        # unlock; the tv/android clients still hit the bot-check on CI IPs.
+        "extractor_args": {"youtube": {"player_client": ["web"]}},
     }
     if YT_COOKIES_FILE:
         ydl_opts["cookiefile"] = YT_COOKIES_FILE
