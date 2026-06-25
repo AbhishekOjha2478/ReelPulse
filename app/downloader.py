@@ -30,13 +30,18 @@ def download_video(video_id: str) -> str:
         "outtmpl": str(out_dir / "source.%(ext)s"),
         # Falls all the way back to plain "best" (whatever single combined
         # format is available) if the preferred split video+audio streams
-        # at <=1080p aren't offered for a given video -- some videos only
-        # expose a restricted format list, and a too-strict selector here
-        # turned into "All candidates failed to download" for every video.
+        # at <=1080p aren't offered for a given video.
         "format": "bestvideo[height<=1080]+bestaudio/best[height<=1080]/best",
         "merge_output_format": "mp4",
         "quiet": True,
         "noprogress": True,
+        # YouTube's default "web" player client increasingly returns an empty
+        # / restricted format list to datacenter IPs (PO-token gating), which
+        # showed up as "Requested format is not available" for every video
+        # even with cookies. Asking yt-dlp to try alternative player clients
+        # (which expose formats without a PO token) is the current standard
+        # workaround. Order matters: first that yields formats wins.
+        "extractor_args": {"youtube": {"player_client": ["tv", "android", "ios", "web"]}},
     }
     if YT_COOKIES_FILE:
         ydl_opts["cookiefile"] = YT_COOKIES_FILE
