@@ -8,6 +8,7 @@ on:
 
 permissions:
   contents: write
+  issues: write
 
 jobs:
   run-pipeline:
@@ -50,3 +51,31 @@ jobs:
           git add data/pipeline.db docs
           git diff --cached --quiet || git commit -m "Pipeline run $(date -u +%Y-%m-%dT%H:%M:%SZ)"
           git push
+
+      - name: Check whether this run degraded or failed
+        if: always()
+        id: alert_check
+        run: |
+          RESULT=$(python -m app.check_alerts)
+          echo "result=$RESULT" >> "$GITHUB_OUTPUT"
+
+      - name: Ensure alert label exists
+        if: always() && startsWith(steps.alert_check.outputs.result, 'ALERT')
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh label create pipeline-alert --color FF0000 --description "Automated pipeline degradation/failure alert" --force
+
+      - name: Open or update alert issue
+        if: always() && startsWith(steps.alert_check.outputs.result, 'ALERT')
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          BODY="${{ steps.alert_check.outputs.result }}
+
+          Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          EXISTING=$(gh issue list --repo "${{ github.repository }}" --label pipeline-alert --state open --json number --jq '.[0].number')
+          if [ -n "$EXISTING" ]; then
+            gh issue comment "$EXISTING" --repo "${{ github.repository }}" --body "$BODY"
+          else
+            gh issue create --repo "${{ github.repository }}" --title "ReelPulse pipeline needs attention" --label pipeline-alert --body "$BODY"
+          fi

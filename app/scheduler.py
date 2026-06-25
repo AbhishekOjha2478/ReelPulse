@@ -37,16 +37,20 @@ def run_pipeline():
     session.close()
 
     quota_used = 0
+    warnings = []
     try:
-        keywords = discover_keywords(run_id=run_id)[:MAX_KEYWORDS_PER_RUN]
+        keywords, trend_warning = discover_keywords(run_id=run_id)
+        keywords = keywords[:MAX_KEYWORDS_PER_RUN]
+        if trend_warning:
+            warnings.append(trend_warning)
         if not keywords:
-            _finish_run(run_id, "completed", quota_used, "No keywords discovered.")
+            _finish_run(run_id, "completed", quota_used, _join_notes("No keywords discovered.", warnings))
             return
 
         candidates = select_candidates_for_run(keywords, per_keyword=2, total_limit=6)
         quota_used += len(keywords) * 100  # search.list cost
         if not candidates:
-            _finish_run(run_id, "completed", quota_used, "No usable CC candidates found.")
+            _finish_run(run_id, "completed", quota_used, _join_notes("No usable CC candidates found.", warnings))
             return
 
         downloaded_paths = {}
@@ -61,7 +65,7 @@ def run_pipeline():
                 logger.error("Download failed for %s: %s", candidate.video_id, exc)
 
         if not usable_candidates:
-            _finish_run(run_id, "completed", quota_used, "All candidates failed to download.")
+            _finish_run(run_id, "completed", quota_used, _join_notes("All candidates failed to download.", warnings))
             return
 
         short_candidate = max(usable_candidates, key=lambda c: c.view_count)
@@ -86,12 +90,18 @@ def run_pipeline():
         )
 
         _mark_used([short_candidate] + compilation_candidates)
-        _finish_run(run_id, "completed", quota_used, "OK")
+        _finish_run(run_id, "completed", quota_used, _join_notes("OK", warnings))
     except Exception as exc:
         logger.exception("Pipeline run %s failed", run_id)
-        _finish_run(run_id, "failed", quota_used, str(exc))
+        _finish_run(run_id, "failed", quota_used, _join_notes(str(exc), warnings))
     finally:
         _cleanup_temp()
+
+
+def _join_notes(message, warnings):
+    if not warnings:
+        return message
+    return message + " | " + " | ".join(warnings)
 
 
 def _mark_used(candidates):
