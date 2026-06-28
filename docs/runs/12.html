@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>ReelPulse</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 960px; margin: 2rem auto; padding: 0 1rem; color: #1a1a1a; }
+    table { width: 100%; border-collapse: collapse; margin-bottom: 2rem; }
+    th, td { text-align: left; padding: 0.4rem 0.6rem; border-bottom: 1px solid #ddd; font-size: 0.9rem; }
+    h1, h2 { margin-top: 2rem; }
+    .badge { display: inline-block; padding: 0.1rem 0.5rem; border-radius: 0.3rem; font-size: 0.8rem; }
+    .badge.completed, .badge.uploaded { background: #d4edda; color: #155724; }
+    .badge.failed { background: #f8d7da; color: #721c24; }
+    .badge.running, .badge.pending { background: #fff3cd; color: #856404; }
+    .badge.skipped { background: #e2e3e5; color: #383d41; }
+    .alert { padding: 0.8rem 1rem; border-radius: 0.4rem; margin-bottom: 1rem; }
+    .alert.paused { background: #f8d7da; color: #721c24; }
+    .alert.running { background: #d4edda; color: #155724; }
+    code { background: #f1f1f1; padding: 0.1rem 0.3rem; border-radius: 0.2rem; }
+    a { color: #0d6efd; text-decoration: none; }
+  </style>
+</head>
+<body>
+  <h1><a href="index.html">ReelPulse Dashboard</a></h1>
+  <p><em>Read-only audit trail, regenerated after every pipeline run. To pause/resume the pipeline or block a channel, use the "Pipeline Control" workflow under this repo's Actions tab.</em></p>
+  
+
+<p><a href="../index.html">&larr; back</a></p>
+
+
+<h2>Run 12 <span class="badge completed">completed</span></h2>
+<p>Started: 2026-06-28 11:13:28.594982 &middot; Finished: 2026-06-28 11:13:45.876338</p>
+<p>Quota used: 500</p>
+<p>Notes: All candidates failed to download.</p>
+
+
+<h3>Uploads from this run</h3>
+<table>
+  <tr><th>Kind</th><th>Title</th><th>Status</th><th>Error</th></tr>
+  
+</table>
+
+<h3>Source candidates (license audit trail)</h3>
+<table>
+  <tr><th>Title</th><th>Channel</th><th>License</th><th>Verified at</th><th>Source</th></tr>
+  
+</table>
+
+
+</body>
+</html>
